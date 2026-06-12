@@ -1,0 +1,35 @@
+# Raw data files — often large; reproduce with src/download_aemo.py
+data/raw/*.csv
+data/raw/*.zip
+data/raw/*.gz
+
+# Processed data — reproducible from raw + notebook
+data/processed/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Output figures are committed (used in README)
+# outputs/figures/ is intentionally tracked
+
+# Internal Claude Code instructions — not for public repos
+CLAUDE.md
