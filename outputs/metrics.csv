@@ -1,0 +1,7 @@
+model,rmse,mape
+Naive Baseline,1672.2,17.631
+"ARIMA(2,1,1)",1599.5,19.876
+"SARIMA(1,1,1)(1,1,1,7)",1624.1,19.732
+Holt-Winters,1592.3,16.197
+XGBoost,674.7,7.431
+XGBoost + Temp,630.0,6.894
