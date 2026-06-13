@@ -154,12 +154,3 @@ The notebook is structured in ten sections:
 **Temperature:** Open-Meteo ERA5 historical archive, Sydney Observatory Hill (-33.87°, 151.21°)
 **Licence:** AEMO data is publicly available under the [AEMO Copyright Notice](https://www.aemo.com.au/about/privacy-and-legal-notices/copyright-permissions)
 
----
-
-## Potential Extensions
-
-- **Public holiday indicator** — one binary feature from the `holidays` package; directly fixes the Christmas/Boxing Day over-prediction
-- **Sub-daily temperature** — hourly BOM forecast temperature rather than daily ERA5 actuals would improve peak timing and make the model deployable in a live forecast context
-- **Probabilistic forecasting** — XGBoost Quantile Regression for 10th/50th/90th percentile outputs; required for operational reserve capacity decisions
-- **Rolling backtesting** — evaluate across 12+ held-out months for stable seasonal performance estimates
-- **Ensemble** — weighted average of XGBoost+Temp and Holt-Winters; complementary error structures often outperform either model alone
