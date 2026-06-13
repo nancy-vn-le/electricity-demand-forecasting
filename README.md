@@ -1,48 +1,56 @@
 # Australian Electricity Demand Forecasting
 
-End-to-end time series forecasting project using publicly available AEMO (Australian Energy Market Operator) data for New South Wales. Demonstrates the full data science workflow from data acquisition through to operational interpretation — built as a portfolio project targeting data analyst/data science roles in the Australian energy sector.
+End-to-end time series forecasting for NSW electricity demand using seven years of publicly available AEMO data. Six models are evaluated on a held-out 4-week test set: seasonal naive, ARIMA, SARIMA, Holt-Winters, XGBoost, and XGBoost with temperature.
 
 ---
 
 ## Results
 
-| Model | RMSE (MW) | MAPE (%) | Granularity |
-|-------|-----------|----------|-------------|
-| **XGBoost** | **674.7** | **7.43%** | 30-min |
-| Holt-Winters | 1,592.3 | 16.20% | 30-min |
-| Naive Baseline | 1,672.2 | 17.63% | 30-min |
-| SARIMA(1,1,1)(1,1,1,7) | 1,624.1 | 19.73% | 30-min |
-| ARIMA(2,1,1) | 1,599.5 | 19.88% | 30-min |
+Test set: 4 December 2025 - 1 January 2026 (1,344 half-hour intervals)
 
-XGBoost achieves a **57.9% improvement in MAPE over the naive baseline**, driven by lag features that capture the weekly seasonal pattern alongside calendar features that encode the hour-of-day and weekday/weekend split.
+| Model | RMSE (MW) | MAPE (%) | Fit granularity |
+|-------|-----------|----------|-----------------|
+| **XGBoost + Temp** | **615.1** | **6.8%** | 30-min |
+| XGBoost | 684.0 | 7.3% | 30-min |
+| Naive Baseline | 1,492.1 | 16.3% | 30-min |
+| ARIMA(2,1,1) | 1,704.7 | 18.7% | Daily (upsampled) |
+| SARIMA(1,1,1)(1,1,1,7) | 1,783.8 | 21.3% | Daily (upsampled) |
+| Holt-Winters | 1,893.5 | 24.6% | 30-min |
 
-ARIMA and SARIMA were fit on daily-aggregated data for computational tractability and then upsampled to 30-min resolution using forward-fill. Their 30-min MAPE is penalised by the ~17.6% intra-day demand swing — at daily granularity, ARIMA (13.5% daily MAPE) and SARIMA (13.5% daily MAPE) are competitive with Holt-Winters.
+XGBoost+Temp achieves a **58.4% MAPE reduction** over the naive baseline. Adding daily maximum temperature to XGBoost cuts MAPE a further 7.4% beyond the lag-and-calendar model alone, isolating the direct contribution of weather information.
+
+ARIMA and SARIMA were fit on daily-averaged data and upsampled to 30-minute resolution. Their 30-minute MAPE is penalised by the ~17.6% intra-day demand swing that a flat daily forecast cannot represent. At daily granularity ARIMA achieves 12.3% MAPE — outperforming the naive baseline at the resolution it was designed for.
+
+---
 
 ## Key Findings
 
-- **Seasonal patterns dominate:** NSW electricity demand has a strong weekly cycle (weekday demand ~15–20% higher than weekend) and an annual dual-peak pattern — summer cooling peaks (Dec–Feb) and a secondary winter heating peak (Jun–Aug).
-- **XGBoost wins at 30-minute resolution:** Lag and calendar features allow it to capture both level and intra-day shape simultaneously. MAPE 7.43%.
-- **ARIMA/SARIMA are penalised at 30-min resolution:** Their flat daily forecasts are blind to intra-day shape — but they perform comparably at daily granularity.
-- **All models struggle at demand peaks:** Morning ramp-up (6–9am) and evening peak (5–8pm) have the highest forecast errors — these periods are most sensitive to temperature, and none of the models here include weather data. Adding temperature as an input would likely halve MAPE.
-- **COVID-19 structural break (2020):** Visible as a step-down in demand during lockdowns — any model trained across this break must account for it or exclude the period.
+- **Weekly pattern is the strongest signal.** The 1-week lag (t-336) is the most important XGBoost feature. Demand at a given half-hour is best predicted by demand at the same half-hour last week — a direct reflection of the commercial/industrial weekly cycle.
+- **Temperature explains demand spikes.** NSW has a U-shaped temperature-demand relationship: high demand at both temperature extremes. Air conditioning load on a 35°C+ day can add 1,500-2,000 MW above the seasonal baseline. History-based features cannot anticipate this; temperature can.
+- **Dual annual peak.** Unlike most Northern Hemisphere markets with a single winter peak, NSW peaks in both summer (cooling) and winter (heating). January and July are typically the two highest-demand months.
+- **Public holidays are the clearest remaining failure.** Christmas Day and Boxing Day (both in the test set) fall mid-week in 2025 but demand collapses to Sunday-equivalent levels. All models over-predict by 1,000-2,000 MW on these days — directly fixable with a public holiday indicator feature.
+- **ARIMA/SARIMA 30-min metrics are a granularity artefact.** At daily resolution ARIMA outperforms naive; the 30-min penalty reflects upsampling, not poor daily-level accuracy.
+
+---
 
 ## Sample Forecast
 
 ![Forecast vs Actual](outputs/figures/forecast_comparison.png)
 
-*All five models forecast against actual demand for the 4-week held-out test set. Zoomed panel shows detail for the first two weeks.*
+*XGBoost+Temp and other models forecast against actual demand for the 4-week test set (Dec 2025 - Jan 2026).*
 
 ---
 
-## Models Compared
+## Models
 
-| Model | Description | Granularity | Relative Complexity |
-|-------|-------------|-------------|---------------------|
-| **Seasonal Naive** | Forecast = demand 1 week ago | 30-min | Baseline |
-| **ARIMA(2,1,1)** | AutoRegressive Integrated Moving Average | Daily (upsampled) | Low |
-| **SARIMA(1,1,1)(1,1,1,7)** | ARIMA + weekly seasonal component | Daily (upsampled) | Medium |
-| **Holt-Winters** | Triple exponential smoothing (level + trend + seasonal) | 30-min | Medium |
-| **XGBoost** | Gradient boosting with lag and calendar features | 30-min | High |
+| Model | Approach | Granularity |
+|-------|----------|-------------|
+| Seasonal Naive | Demand from 4 weeks prior | 30-min |
+| ARIMA(2,1,1) | AutoRegressive Integrated Moving Average | Daily |
+| SARIMA(1,1,1)(1,1,1,7) | ARIMA with weekly seasonal component | Daily |
+| Holt-Winters | Triple exponential smoothing, seasonal_periods=336 | 30-min |
+| XGBoost | Gradient boosting with lag + calendar features | 30-min |
+| XGBoost + Temp | XGBoost + daily maximum temperature | 30-min |
 
 ---
 
@@ -51,15 +59,19 @@ ARIMA and SARIMA were fit on daily-aggregated data for computational tractabilit
 ```
 project-energy/
 ├── data/
-│   ├── raw/              # AEMO CSV files (gitignored — run download script)
+│   ├── raw/              # AEMO and temperature CSV files (gitignored — run download scripts)
 │   └── processed/        # Cleaned data (gitignored — reproducible from raw)
 ├── notebooks/
-│   └── electricity_demand_forecasting.ipynb   # Main analysis (all sections)
+│   └── electricity_demand_forecasting.ipynb   # Full analysis
 ├── src/
-│   ├── download_aemo.py  # Download AEMO data for a configurable date range
-│   └── utils.py          # Shared metrics (RMSE, MAPE), feature engineering, plot helpers
+│   ├── download_aemo.py      # Download AEMO data for a configurable date range
+│   ├── download_weather.py   # Download Sydney temperature from Open-Meteo
+│   └── utils.py              # Metrics (RMSE, MAPE), feature engineering, plot helpers
 ├── outputs/
-│   └── figures/          # Saved charts (committed — used in this README)
+│   ├── figures/          # Saved charts (committed — embedded in this README)
+│   ├── forecasts.csv     # Test-set forecasts from all models
+│   └── metrics.csv       # Summary metrics table
+├── app.py                # Streamlit dashboard
 ├── requirements.txt
 └── README.md
 ```
@@ -76,59 +88,58 @@ pip install -r requirements.txt
 **2. Download the data**
 ```bash
 python src/download_aemo.py
+python src/download_weather.py
 ```
-This downloads AEMO NSW1 dispatch data for 2019–2024 (~175,000 rows). Takes ~5–10 minutes depending on connection speed. Edit `REGION`, `START_YEAR`, `END_YEAR` at the top of the script to change the scope.
+
+`download_aemo.py` fetches NSW1 dispatch data for 2019-2025 (84 monthly CSV files, ~120k rows). Takes ~15-20 seconds. Edit `START_YEAR` and `END_YEAR` at the top to change the scope.
 
 **3. Run the notebook**
 ```bash
 jupyter notebook notebooks/electricity_demand_forecasting.ipynb
 ```
-Run all cells top-to-bottom (Kernel → Restart & Run All). Total runtime approximately 10–20 minutes depending on hardware (SARIMA and Holt-Winters are the slow steps).
+
+Run all cells top-to-bottom (Kernel -> Restart & Run All). Total runtime approximately 10-20 minutes — SARIMA and Holt-Winters are the slow cells.
+
+**4. Launch the dashboard** (optional)
+```bash
+streamlit run app.py
+```
+
+Requires `outputs/forecasts.csv` and `outputs/metrics.csv` to exist (generated by the notebook).
 
 ---
 
 ## Methodology
 
-The notebook follows this structure:
+The notebook is structured in ten sections:
 
-1. **Data Loading & Cleaning** — parse AEMO settlement dates with correct Australian timezone handling (AEST/AEDT); check for gaps; verify 30-minute interval regularity
-2. **EDA** — trend decomposition, weekday vs weekend analysis, hour-of-day profile, monthly seasonality, ACF/PACF plots
-3. **Stationarity Testing** — ADF test; first-differencing if needed
-4. **Train/Test Split** — last 4 weeks as test, strictly time-ordered (no random splitting)
-5. **Models** — each model explained, fitted, and evaluated with RMSE and MAPE
-6. **Evaluation** — side-by-side model comparison, residual heatmap by hour and day of week
-7. **Practical Implications** — when models fail, what an energy company would do next
-
-Every modelling decision includes a plain-language explanation and an "interview answer" note — the notebook is designed to build intuition, not just produce results.
+1. **Data loading** — parse AEMO settlement dates with AEST/AEDT timezone handling; detect and resample Five Minute Settlement era data (post-Oct 2021)
+2. **EDA** — seasonal decomposition, weekday/weekend analysis, hour-of-day demand profile, ACF/PACF
+3. **Stationarity testing** — ADF test, first differencing
+4. **Train/test split** — last 4 weeks held out, strictly time-ordered
+5. **Statistical models** — ARIMA, SARIMA, Holt-Winters: model specification, fit, and forecast
+6. **XGBoost** — lag feature engineering, calendar features, no-leakage split
+7. **Temperature analysis** — Open-Meteo ERA5 data, temperature-demand relationship, XGBoost+Temp
+8. **Evaluation** — RMSE and MAPE at 30-min and daily granularity, residual heatmap
+9. **Feature importance** — XGBoost and XGBoost+Temp feature rankings
+10. **Artefact export** — save `forecasts.csv` and `metrics.csv` for the dashboard
 
 ---
 
 ## Dataset
 
-**Source:** AEMO (Australian Energy Market Operator)  
-**URL pattern:** `https://aemo.com.au/aemo/data/nem/priceanddemand/PRICE_AND_DEMAND_YYYYMM_NSW1.csv`  
-**Coverage:** NSW1 region, 30-minute dispatch intervals, 2019–2024 (72 monthly files)  
-**Columns:** `TOTALDEMAND` (MW demand served by the grid) and `RRP` (regional reference price, $/MWh)  
+**Source:** AEMO (Australian Energy Market Operator)
+**URL pattern:** `https://aemo.com.au/aemo/data/nem/priceanddemand/PRICE_AND_DEMAND_YYYYMM_NSW1.csv`
+**Coverage:** NSW1 region, 30-minute dispatch intervals, January 2019 - December 2025
+**Temperature:** Open-Meteo ERA5 historical archive, Sydney Observatory Hill (-33.87°, 151.21°)
 **Licence:** AEMO data is publicly available under the [AEMO Copyright Notice](https://www.aemo.com.au/about/privacy-and-legal-notices/copyright-permissions)
 
 ---
 
-## Skills Demonstrated
+## Potential Extensions
 
-- Time series analysis: seasonal decomposition, ACF/PACF, ADF stationarity test
-- Statistical forecasting: ARIMA, SARIMA, Holt-Winters exponential smoothing
-- Machine learning for time series: XGBoost with lag/calendar feature engineering, no-leakage train/test splits
-- Model evaluation: RMSE, MAPE, residual analysis, error heatmaps
-- Python data stack: pandas, NumPy, statsmodels, scikit-learn, XGBoost, matplotlib, seaborn
-- Data engineering: downloading and parsing AEMO public CSV archives programmatically; timezone-aware datetime handling (AEST/AEDT, DST transitions)
-- Domain interpretation: electricity market context, operational forecasting use cases
-
----
-
-## What's Next (Potential Extensions)
-
-- **Add weather data:** Integrate BOM temperature forecasts as an exogenous variable (SARIMAX, XGBoost feature) — expected to halve MAPE
-- **Probabilistic forecasting:** XGBoost Quantile Regression or SARIMA prediction intervals for risk management
-- **Prophet:** Facebook's Prophet model handles holidays and trend changepoints well — good comparison point
-- **Streamlit dashboard:** Interactive visualisation of forecasts for non-technical stakeholders
-- **Multi-state:** Extend to VIC1 or full NEM-wide demand
+- **Public holiday indicator** — one binary feature from the `holidays` package; directly fixes the Christmas/Boxing Day over-prediction
+- **Sub-daily temperature** — hourly BOM forecast temperature rather than daily ERA5 actuals would improve peak timing and make the model deployable in a live forecast context
+- **Probabilistic forecasting** — XGBoost Quantile Regression for 10th/50th/90th percentile outputs; required for operational reserve capacity decisions
+- **Rolling backtesting** — evaluate across 12+ held-out months for stable seasonal performance estimates
+- **Ensemble** — weighted average of XGBoost+Temp and Holt-Winters; complementary error structures often outperform either model alone

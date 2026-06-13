@@ -26,7 +26,7 @@ OUTPUT_FILE = OUTPUT_DIR / "sydney_temperature.csv"
 LATITUDE = -33.87
 LONGITUDE = 151.21
 START_DATE = "2019-01-01"
-END_DATE = "2024-12-31"
+END_DATE = "2025-12-31"
 TIMEZONE = "Australia/Sydney"
 
 OPEN_METEO_URL = "https://archive-api.open-meteo.com/v1/archive"

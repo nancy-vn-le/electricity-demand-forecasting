@@ -26,7 +26,7 @@ import requests
 # ---------------------------------------------------------------------------
 REGION = "NSW1"
 START_YEAR = 2019
-END_YEAR = 2024  # inclusive
+END_YEAR = 2025  # inclusive
 OUTPUT_DIR = Path(__file__).parent.parent / "data" / "raw"
 OUTPUT_FILE = OUTPUT_DIR / "nsw1_price_and_demand.csv"
 
