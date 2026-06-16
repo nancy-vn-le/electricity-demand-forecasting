@@ -17,7 +17,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------------------
-# Colors — single source of truth for pills, chart lines, and CSS
+# Colors - single source of truth for pills, chart lines, and CSS
 # ---------------------------------------------------------------------------
 MODEL_COLOURS = {
     "Actual":         "#FFFFFF",
@@ -43,7 +43,7 @@ METRIC_NAME = {
 }
 
 # ---------------------------------------------------------------------------
-# CSS — metric cards + colored pills
+# CSS - metric cards + colored pills
 # ---------------------------------------------------------------------------
 def _pill_css(model: str, color: str) -> str:
     text = "#1e2130" if color.upper() in _DARK_TEXT else "#ffffff"
@@ -178,14 +178,14 @@ kpi2.metric(
     f"{best_mape:.1f} %",
     delta=best_model,
     delta_color="off",
-    help="Lowest MAPE across all models — primary ranking metric",
+    help="Lowest MAPE across all models - primary ranking metric",
 )
 kpi3.metric(
     "Naive RMSE",
     f"{naive_rmse:,.0f} MW",
     delta="baseline",
     delta_color="off",
-    help="Seasonal naive (same demand 4 weeks prior) — the bar to beat",
+    help="Seasonal naive (same demand 4 weeks prior) - the bar to beat",
 )
 kpi4.metric(
     "Peak Demand",
@@ -201,7 +201,7 @@ st.divider()
 # ---------------------------------------------------------------------------
 st.markdown(
     "<p style='color:#aaa; font-size:0.72rem; letter-spacing:0.12em; margin-bottom:0.4rem;'>"
-    "FORECAST VS ACTUAL &mdash; TOGGLE MODELS</p>",
+    "FORECAST VS ACTUAL - TOGGLE MODELS</p>",
     unsafe_allow_html=True,
 )
 
@@ -310,7 +310,7 @@ st.divider()
 # ---------------------------------------------------------------------------
 st.markdown(
     "<p style='color:#aaa; font-size:0.72rem; letter-spacing:0.12em; margin-bottom:0.4rem;'>"
-    "MODEL PERFORMANCE &mdash; 4-WEEK TEST SET</p>",
+    "MODEL PERFORMANCE - 4-WEEK TEST SET</p>",
     unsafe_allow_html=True,
 )
 
@@ -326,14 +326,14 @@ st.dataframe(
         "Model": st.column_config.TextColumn("MODEL", width="large"),
         "rmse": st.column_config.ProgressColumn(
             "RMSE (MW)",
-            help="Root Mean Squared Error — lower is better",
+            help="Root Mean Squared Error - lower is better",
             min_value=0,
             max_value=rmse_max,
             format="%.1f",
         ),
         "mape": st.column_config.ProgressColumn(
             "MAPE (%)",
-            help="Mean Absolute Percentage Error — lower is better",
+            help="Mean Absolute Percentage Error - lower is better",
             min_value=0,
             max_value=mape_max,
             format="%.2f%%",
@@ -344,7 +344,7 @@ st.dataframe(
     height=260,
 )
 st.caption(
-    "ARIMA/SARIMA were fit on daily data and upsampled — their 30-min MAPE reflects the ~17.6% "
+    "ARIMA/SARIMA were fit on daily data and upsampled - their 30-min MAPE reflects the ~17.6% "
     "intra-day swing a flat daily forecast cannot represent. At daily granularity ARIMA achieves "
     "12.3% MAPE, outperforming the naive baseline."
 )
@@ -380,7 +380,7 @@ with ins2:
     st.warning(
         "**Daily models penalised at 30-min resolution**\n\n"
         "ARIMA and SARIMA produce one flat value per day, forward-filled to 30-min intervals. "
-        "At daily granularity ARIMA achieves 12.3% MAPE — better than the naive baseline. "
+        "At daily granularity ARIMA achieves 12.3% MAPE - better than the naive baseline. "
         "The 30-min penalty is a granularity artefact, not a model failure."
     )
 
@@ -389,7 +389,7 @@ with ins3:
         "**Public holidays are the clearest remaining error**\n\n"
         "Christmas (25 Dec) and Boxing Day (26 Dec) fall mid-week in 2025 but demand "
         "collapses to Sunday-equivalent levels. All models over-predict by 1,000-2,000 MW "
-        "on these days — directly addressable with a public holiday indicator feature."
+        "on these days - directly addressable with a public holiday indicator feature."
     )
 
 st.divider()
