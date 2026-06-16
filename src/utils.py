@@ -193,7 +193,7 @@ def plot_forecast_vs_actual(
     for name, forecast in forecasts.items():
         ax.plot(forecast.index, forecast.values,
                 color=colour_map.get(name, "steelblue"), lw=1, alpha=0.8, label=name)
-    ax.set_title(f"{title} — Full Test Period ({TEST_WEEKS} weeks)")
+    ax.set_title(f"{title} - Full Test Period ({TEST_WEEKS} weeks)")
     ax.set_ylabel("Demand (MW)")
     ax.legend(loc="upper right", fontsize=8)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%d %b"))
@@ -208,7 +208,7 @@ def plot_forecast_vs_actual(
         fmask = forecast.index <= zoom_end
         ax.plot(forecast.index[fmask], forecast.values[fmask],
                 color=colour_map.get(name, "steelblue"), lw=1, alpha=0.8, label=name)
-    ax.set_title(f"Zoomed — First {zoom_weeks} Weeks of Test Period")
+    ax.set_title(f"Zoomed - First {zoom_weeks} Weeks of Test Period")
     ax.set_ylabel("Demand (MW)")
     ax.set_xlabel("Date")
     ax.legend(loc="upper right", fontsize=8)
