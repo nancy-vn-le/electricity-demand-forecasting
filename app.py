@@ -154,12 +154,30 @@ test_month = forecasts.index.min().strftime("%b %Y").upper()
 # ---------------------------------------------------------------------------
 # Header
 # ---------------------------------------------------------------------------
-st.markdown(
-    "<p style='color:#888; font-size:0.72rem; letter-spacing:0.15em; margin-bottom:0;'>"
-    f"NSW AEMO &middot; {test_month} &middot; 4-WEEK TEST</p>",
-    unsafe_allow_html=True,
-)
-st.title("Electricity Demand Forecast")
+col_title, col_btns = st.columns([7, 3])
+with col_title:
+    st.markdown(
+        "<p style='color:#888; font-size:0.72rem; letter-spacing:0.15em; margin-bottom:0;'>"
+        f"NSW AEMO &middot; {test_month} &middot; 4-WEEK TEST</p>",
+        unsafe_allow_html=True,
+    )
+    st.title("Electricity Demand Forecast")
+with col_btns:
+    st.markdown("<div style='padding-top:2.2rem; display:flex; justify-content:flex-end; gap:0.5rem;'>", unsafe_allow_html=True)
+    b1, b2 = st.columns(2)
+    with b1:
+        st.link_button(
+            "Full Report",
+            "https://github.com/nancy-vn-le/electricity-demand-forecasting/blob/main/report.md",
+            use_container_width=True,
+        )
+    with b2:
+        st.link_button(
+            "GitHub",
+            "https://github.com/nancy-vn-le/electricity-demand-forecasting",
+            use_container_width=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
 st.divider()
 
 # ---------------------------------------------------------------------------
@@ -378,10 +396,11 @@ with ins1:
 
 with ins2:
     st.warning(
-        "**Daily models penalised at 30-min resolution**\n\n"
-        "ARIMA and SARIMA produce one flat value per day, forward-filled to 30-min intervals. "
-        "At daily granularity ARIMA achieves 12.3% MAPE - better than the naive baseline. "
-        "The 30-min penalty is a granularity artefact, not a model failure."
+        "**ARIMA beats naive at its own resolution**\n\n"
+        "ARIMA and SARIMA were fit on daily data - their 30-min scores are penalised by "
+        "intra-day variation a flat daily forecast cannot represent. At daily granularity "
+        "ARIMA achieves 12.3% MAPE, outperforming the naive baseline. A fair apples-to-apples "
+        "comparison requires the daily metrics table."
     )
 
 with ins3:
@@ -393,7 +412,4 @@ with ins3:
     )
 
 st.divider()
-st.caption(
-    "Data: AEMO NSW1 Price and Demand | Temperature: Open-Meteo (ERA5) | "
-    "Code: github.com/nancy-vn-le/electricity-demand-forecasting"
-)
+st.caption("Data: AEMO NSW1 Price and Demand | Temperature: Open-Meteo (ERA5)")

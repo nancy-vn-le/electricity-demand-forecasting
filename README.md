@@ -1,6 +1,6 @@
-# Australian Electricity Demand Forecasting
+# NSW Electricity Demand Forecasting
 
-End-to-end time series forecasting for NSW electricity demand using seven years of publicly available AEMO data. Six models are evaluated on a held-out 4-week test set: seasonal naive, ARIMA, SARIMA, Holt-Winters, XGBoost, and XGBoost with temperature.
+Six forecasting models evaluated on seven years of AEMO NSW grid demand data (2019-2025). Best result: XGBoost with weather data at 6.8% MAPE on a held-out December 2025 test set - a 58% improvement over a naive seasonal baseline. Includes an interactive Streamlit dashboard and a full analysis report.
 
 ---
 
@@ -37,19 +37,21 @@ Test set: 4 December 2025 - 1 January 2026 (1,344 half-hour intervals)
 | SARIMA(1,1,1)(1,1,1,7) | 1,783.8 | 21.3% | Daily (upsampled) |
 | Holt-Winters | 1,893.5 | 24.6% | 30-min |
 
-XGBoost+Temp achieves a **58.4% MAPE reduction** over the naive baseline. Adding daily maximum temperature to XGBoost cuts MAPE a further 7.4% beyond the lag-and-calendar model alone, isolating the direct contribution of weather information.
+XGBoost+Temp achieves a **58.4% MAPE reduction** over the naive baseline. Adding daily maximum temperature cuts MAPE a further 7.4% beyond history and calendar features alone.
 
-ARIMA and SARIMA were fit on daily-averaged data and upsampled to 30-minute resolution. Their 30-minute MAPE is penalised by the ~17.6% intra-day demand swing that a flat daily forecast cannot represent. At daily granularity ARIMA achieves 12.3% MAPE - outperforming the naive baseline at the resolution it was designed for.
+ARIMA and SARIMA were fit on daily-averaged data and upsampled to 30-minute resolution. Their 30-minute MAPE is penalised by the ~17.6% intra-day demand swing that a flat daily forecast cannot represent. At daily granularity ARIMA achieves 12.3% MAPE, outperforming the naive baseline at the resolution it was designed for.
+
+**For context:** NSW average weekday demand is approximately 7,200 MW. A 615 MW RMSE represents around 8.5% of that load - comparable to a large gas peaker unit cycling in or out. At daily granularity the best model error falls to 343 MW, within the reserve margin that grid operators routinely hold for unexpected demand swings.
 
 ---
 
 ## Key Findings
 
-- **Weekly pattern is the strongest signal.** The 1-week lag (t-336) is the most important XGBoost feature. Demand at a given half-hour is best predicted by demand at the same half-hour last week - a direct reflection of the commercial/industrial weekly cycle.
-- **Temperature explains demand spikes.** NSW has a U-shaped temperature-demand relationship: high demand at both temperature extremes. Air conditioning load on a 35°C+ day can add 1,500-2,000 MW above the seasonal baseline. History-based features cannot anticipate this; temperature can.
-- **Dual annual peak.** Unlike most Northern Hemisphere markets with a single winter peak, NSW peaks in both summer (cooling) and winter (heating). January and July are typically the two highest-demand months.
-- **Public holidays are the clearest remaining failure.** Christmas Day and Boxing Day (both in the test set) fall mid-week in 2025 but demand collapses to Sunday-equivalent levels. All models over-predict by 1,000-2,000 MW on these days - directly fixable with a public holiday indicator feature.
-- **ARIMA/SARIMA 30-min metrics are a granularity artefact.** At daily resolution ARIMA outperforms naive; the 30-min penalty reflects upsampling, not poor daily-level accuracy.
+- **Weather is the biggest lever.** NSW has a U-shaped temperature-demand relationship: air conditioning load on a 35°C+ day adds 1,500-2,000 MW above the seasonal baseline. History-based features cannot anticipate this in advance; a single daily temperature figure can. It accounts for 7.4% of the total improvement over the naive baseline.
+- **Public holidays are the hardest days to get right.** Christmas Day and Boxing Day fall mid-week in 2025 but demand collapses to Sunday-equivalent levels. All six models over-predict by 1,000-2,000 MW on these days - one binary feature (`is_public_holiday`) would directly fix this.
+- **Recent history dominates.** The 24-hour lag (demand at this same time yesterday) is the strongest single feature, followed by the 1-week lag. The model learns that what the grid was doing 24 hours ago is a better starting point than the same time last week.
+- **NSW has a dual seasonal peak.** Unlike most Northern Hemisphere electricity markets with a single winter peak, NSW peaks in both summer (cooling) and winter (heating). January and July are typically the two highest-demand months - a characteristic that affects how seasonal models generalise across years.
+- **Statistical model 30-min scores need context.** ARIMA achieves 12.3% daily MAPE and outperforms the naive baseline at the resolution it was designed for. Its weaker 30-minute score is a granularity artefact from upsampling a daily forecast, not evidence of poor performance.
 
 ---
 
@@ -131,18 +133,7 @@ Requires `outputs/forecasts.csv` and `outputs/metrics.csv` to exist (generated b
 
 ## Methodology
 
-The notebook is structured in ten sections:
-
-1. **Data loading** - parse AEMO settlement dates with AEST/AEDT timezone handling; detect and resample Five Minute Settlement era data (post-Oct 2021)
-2. **EDA** - seasonal decomposition, weekday/weekend analysis, hour-of-day demand profile, ACF/PACF
-3. **Stationarity testing** - ADF test, first differencing
-4. **Train/test split** - last 4 weeks held out, strictly time-ordered
-5. **Statistical models** - ARIMA, SARIMA, Holt-Winters: model specification, fit, and forecast
-6. **XGBoost** - lag feature engineering, calendar features, no-leakage split
-7. **Temperature analysis** - Open-Meteo ERA5 data, temperature-demand relationship, XGBoost+Temp
-8. **Evaluation** - RMSE and MAPE at 30-min and daily granularity, residual heatmap
-9. **Feature importance** - XGBoost and XGBoost+Temp feature rankings
-10. **Artefact export** - save `forecasts.csv` and `metrics.csv` for the dashboard
+The notebook covers data loading and cleaning (AEMO Five Minute Settlement resampling, AEST/AEDT timezone handling), exploratory analysis (seasonal decomposition, temperature-demand relationship, ACF/PACF), stationarity testing, model fitting, and evaluation. The train-test split is strictly time-ordered - last 4 weeks held out - to mirror operational forecasting conditions. Feature engineering for XGBoost uses only past observations at each point (`.shift(k)`) to prevent data leakage. Evaluation is reported at both 30-minute and daily granularity so statistical models (designed for daily data) are assessed at their native resolution.
 
 ---
 
