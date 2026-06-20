@@ -1,3 +1,13 @@
+---
+title: NSW Electricity Demand Forecasting
+sdk: streamlit
+sdk_version: 1.58.0
+app_file: app.py
+pinned: false
+license: mit
+short_description: Six forecasting models on 7 years of AEMO NSW grid data. Best result 6.8% MAPE.
+---
+
 # NSW Electricity Demand Forecasting
 
 Six forecasting models evaluated on seven years of AEMO NSW grid demand data (2019-2025). Best result: XGBoost with weather data at 6.8% MAPE on a held-out December 2025 test set - a 58% improvement over a naive seasonal baseline. Includes an interactive Streamlit dashboard and a full analysis report.
@@ -5,8 +15,6 @@ Six forecasting models evaluated on seven years of AEMO NSW grid demand data (20
 ---
 
 ## Interactive Dashboard
-
-![Dashboard](outputs/figures/dashboard.png)
 
 An interactive Streamlit dashboard visualises the full test-period results:
 
@@ -144,4 +152,3 @@ The notebook covers data loading and cleaning (AEMO Five Minute Settlement resam
 **Coverage:** NSW1 region, 30-minute dispatch intervals, January 2019 - December 2025
 **Temperature:** Open-Meteo ERA5 historical archive, Sydney Observatory Hill (-33.87°, 151.21°)
 **Licence:** AEMO data is publicly available under the [AEMO Copyright Notice](https://www.aemo.com.au/about/privacy-and-legal-notices/copyright-permissions)
-
